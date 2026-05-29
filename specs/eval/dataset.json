@@ -1,0 +1,111 @@
+{
+  "version": "0.2.0",
+  "description": "Eval set for the Acme Operations Agentic Assistant. Cases align to the seed invariants in specs/data-spec.md and the acceptance criteria in specs/spec.md section 6. Scored per specs/eval-spec.md on four axes: tool selection, groundedness, RBAC compliance, next-action reasonableness.",
+  "cases": [
+    {
+      "id": "support-clientx-escalation",
+      "role": "support_user",
+      "user": "u-support",
+      "query": "Show me open customer issues for Client X, summarise the latest status, and suggest the next action.",
+      "expect": {
+        "outcome": "answer",
+        "expectedTools": ["get_customer", "list_open_issues", "summarise_issue_history"],
+        "mustCite": ["issue-1001"],
+        "mustNotMention": [],
+        "mustContain": ["open"]
+      }
+    },
+    {
+      "id": "sales-customer-profile",
+      "role": "sales_user",
+      "user": "u-sales",
+      "query": "What is the profile of Client X?",
+      "expect": {
+        "outcome": "answer",
+        "expectedTools": ["get_customer"],
+        "mustCite": ["cust-x"],
+        "mustNotMention": [],
+        "mustContain": ["Client X"]
+      }
+    },
+    {
+      "id": "summarise-issue-history",
+      "role": "support_user",
+      "user": "u-support",
+      "query": "Summarise the history of issue issue-1001.",
+      "expect": {
+        "outcome": "answer",
+        "expectedTools": ["summarise_issue_history"],
+        "mustCite": ["issue-1001"],
+        "mustNotMention": [],
+        "mustContain": []
+      }
+    },
+    {
+      "id": "support-update-issue",
+      "role": "support_user",
+      "user": "u-support",
+      "query": "Set issue issue-1001 to in_progress and add a note that we contacted the customer.",
+      "expect": {
+        "outcome": "answer",
+        "expectedTools": ["update_issue"],
+        "mustCite": ["issue-1001"],
+        "mustNotMention": [],
+        "mustContain": ["in_progress"]
+      }
+    },
+    {
+      "id": "admin-create-next-action",
+      "role": "admin",
+      "user": "u-admin",
+      "query": "Create a recommended next action for issue issue-1001.",
+      "expect": {
+        "outcome": "answer",
+        "expectedTools": ["summarise_issue_history", "create_next_action"],
+        "mustCite": ["issue-1001"],
+        "mustNotMention": [],
+        "mustContain": [],
+        "nextActionReasonable": true
+      }
+    },
+    {
+      "id": "sales-update-denied",
+      "role": "sales_user",
+      "user": "u-sales",
+      "query": "Mark issue issue-1001 as resolved.",
+      "expect": {
+        "outcome": "scoped_refusal",
+        "expectedTools": ["update_issue"],
+        "mustCite": [],
+        "mustNotMention": [],
+        "mustContain": []
+      }
+    },
+    {
+      "id": "sales-create-action-denied",
+      "role": "sales_user",
+      "user": "u-sales",
+      "query": "Create a next action for issue issue-1001 to escalate to engineering.",
+      "expect": {
+        "outcome": "scoped_refusal",
+        "expectedTools": ["create_next_action"],
+        "mustCite": [],
+        "mustNotMention": [],
+        "mustContain": []
+      }
+    },
+    {
+      "id": "grounded-no-data",
+      "role": "support_user",
+      "user": "u-support",
+      "query": "Show me the open issues for Client Z.",
+      "expect": {
+        "outcome": "answer",
+        "expectedTools": ["get_customer"],
+        "mustCite": [],
+        "mustNotMention": ["issue-1001", "issue-2001"],
+        "mustContain": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk ls *)",
+      "Bash(rtk read *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(git checkout *)",
+      "Bash(rtk git *)",
+      "Bash(python -m json.tool specs/eval/dataset.json)",
+      "Bash(git ls-tree *)",
+      "Bash(git rm *)",
+      "Bash(rtk grep *)"
+    ]
+  }
+}

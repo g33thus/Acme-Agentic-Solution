@@ -1,0 +1,236 @@
+openapi: 3.1.0
+info:
+  title: Acme Operations Agentic Assistant API
+  version: 0.1.0
+  description: >
+    Contract for the FastAPI layer. Governed by specs/spec.md and
+    specs/constitution.md. All endpoints except /health require a valid
+    Keycloak bearer token. RBAC is enforced server-side.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: system
+  - name: query
+  - name: session
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Liveness check
+      description: Unauthenticated. The only public endpoint.
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /v1/query:
+    post:
+      tags: [query]
+      summary: Submit a natural-language operational query
+      description: >
+        The agent plans and calls MCP tools scoped to the caller's role,
+        then returns a grounded answer with citations. Every request is traced.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+      responses:
+        "200":
+          description: Grounded answer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /v1/sessions:
+    post:
+      tags: [session]
+      summary: Create a session
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /v1/sessions/{sessionId}:
+    get:
+      tags: [session]
+      summary: Get session metadata
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Session not found
+    delete:
+      tags: [session]
+      summary: End a session and clear its memory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Session ended
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Keycloak-issued OIDC access token.
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid, or expired token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Authenticated but role lacks access to the requested data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Request failed schema validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        version:
+          type: string
+
+    QueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          description: Natural-language operational question
+          minLength: 1
+        sessionId:
+          type: string
+          description: Optional existing session for conversation memory
+
+    QueryResponse:
+      type: object
+      required: [answer, citations, traceId]
+      properties:
+        answer:
+          type: string
+          description: Grounded natural-language answer
+        citations:
+          type: array
+          description: Structured references to the data used
+          items:
+            $ref: "#/components/schemas/Citation"
+        toolCalls:
+          type: array
+          description: Tools invoked while answering
+          items:
+            $ref: "#/components/schemas/ToolCall"
+        sessionId:
+          type: string
+        traceId:
+          type: string
+          description: Phoenix trace identifier for audit
+
+    Citation:
+      type: object
+      required: [source, ref]
+      properties:
+        source:
+          type: string
+          description: Logical source, e.g. customers, issues, issue_updates, next_actions
+        ref:
+          type: string
+          description: Identifier of the cited record
+        detail:
+          type: string
+
+    ToolCall:
+      type: object
+      required: [tool]
+      properties:
+        tool:
+          type: string
+        arguments:
+          type: object
+          additionalProperties: true
+
+    Session:
+      type: object
+      required: [sessionId, createdAt]
+      properties:
+        sessionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
