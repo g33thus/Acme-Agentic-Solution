@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Acme Operations Assistant</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+      #answer { white-space: pre-wrap; border: 1px solid #ccc; border-radius: 8px; padding: 1rem; min-height: 4rem; }
+      .row { display: flex; gap: 0.5rem; margin: 1rem 0; }
+      input, button { padding: 0.6rem; font-size: 1rem; }
+      input { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <h1>Acme Operations Assistant</h1>
+    <!--
+      Minimal chat UI (spec FR-9). Phase 0 placeholder.
+      Phase 3 (T-3.5) wires Keycloak login and calls POST /v1/query with the
+      bearer token, then renders answer + citations. No business logic here.
+    -->
+    <div class="row">
+      <input id="token" placeholder="Keycloak bearer token" />
+    </div>
+    <div class="row">
+      <input id="query" placeholder="Ask an operational question..." />
+      <button id="send" disabled>Send (Phase 3)</button>
+    </div>
+    <div id="answer">Answer and citations appear here.</div>
+  </body>
+</html>
